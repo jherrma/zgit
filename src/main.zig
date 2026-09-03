@@ -3,7 +3,7 @@ const Io = std.Io;
 
 const zgit = @import("zgit");
 
-pub fn main(init: std.process.Init) !void {
+pub fn main(init: std.process.Init) !u8 {
     // This is appropriate for anything that lives as long as the process.
     const arena: std.mem.Allocator = init.arena.allocator();
 
@@ -25,5 +25,6 @@ pub fn main(init: std.process.Init) !void {
     const stdout_writer = &stdout_file_writer.interface;
     try stdout_writer.flush(); // Don't forget to flush!
 
-    try zgit.run(init, args);
+    const status = try zgit.run(init, args);
+    return status;
 }

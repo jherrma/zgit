@@ -17,6 +17,13 @@ pub fn parseArgs(args: []const [:0]const u8) command_envelope_module.CommandEnve
         };
     }
 
+    if (std.mem.eql(u8, args[1], "cat-file")) {
+        return command_envelope_module.CommandEnvelope{
+            .command = command_envelope_module.Command.cat_file,
+            .parameters = args[2..],
+        };
+    }
+
     return command_envelope_module.CommandEnvelopeError.UnknownCommand;
 }
 

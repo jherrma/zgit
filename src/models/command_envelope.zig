@@ -1,6 +1,7 @@
 pub const Command = enum {
     help,
     init,
+    cat_file,
 };
 
 pub const CommandEnvelope = struct {

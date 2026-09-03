@@ -78,7 +78,7 @@ pub fn discover_at_dir(io: std.Io, allocator: std.mem.Allocator, working_directo
 
 pub fn discover(io: std.Io, allocator: std.mem.Allocator, path: ?[:0]const u8) errors_module.DiscoverRepositoryErrors!*Repository {
     const target_directory = get_working_directory(io, path) catch |err| {
-        std.log.err("could not open dir due to {any}", .{ path.?, err });
+        std.log.err("could not open dir due to {any}", .{err});
         return errors_module.DiscoverRepositoryErrors.OpenDirError;
     };
 

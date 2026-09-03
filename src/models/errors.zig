@@ -4,3 +4,8 @@ pub const DiscoverRepositoryErrors = error{
     OutOfMemory,
     DirError,
 };
+
+pub const OpenObjectError = error{
+    AmbigousName,
+    FileNotFound,
+};
