@@ -9,10 +9,6 @@ pub fn main(init: std.process.Init) !u8 {
 
     // Accessing command line arguments:
     const args = try init.minimal.args.toSlice(arena);
-    // std.log.info("found {d} parameters", .{args.len});
-    // for (args) |arg| {
-    //     std.log.info("arg: {s}", .{arg});
-    // }
 
     // In order to do I/O operations need an `Io` instance.
     const io = init.io;
@@ -23,8 +19,15 @@ pub fn main(init: std.process.Init) !u8 {
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_file_writer: Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
     const stdout_writer = &stdout_file_writer.interface;
-    try stdout_writer.flush(); // Don't forget to flush!
 
-    const status = try zgit.run(init, args);
-    return status;
+    var stderr_buffer: [1024]u8 = undefined;
+    var stderr_file_writer: Io.File.Writer = .init(.stderr(), io, &stderr_buffer);
+    const stderr_writer = &stderr_file_writer.interface;
+
+    // Flush on every exit path, including an error returned by `run` —
+    // otherwise buffered diagnostics are lost exactly when they matter.
+    defer stderr_writer.flush() catch {};
+    defer stdout_writer.flush() catch {};
+
+    return try zgit.run(init, stdout_writer, stderr_writer, args);
 }

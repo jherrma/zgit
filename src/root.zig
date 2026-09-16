@@ -2,29 +2,40 @@
 const std = @import("std");
 const Io = std.Io;
 
+const Communication = @import("models/Communication.zig").Communication;
+
 const command_envelope_module = @import("models/command_envelope.zig");
 const argument_parser_module = @import("services/argument_parser.zig");
 const init_command_module = @import("services/init_repository.zig");
 const cat_file_module = @import("services//cat_file.zig");
+const hash_object_module = @import("services/hash_object.zig");
 
-pub fn run(init: std.process.Init, args: []const [:0]const u8) !u8 {
+pub fn run(init: std.process.Init, stdout_writer: *std.Io.Writer, stderr_writer: *std.Io.Writer, args: []const [:0]const u8) !u8 {
+    const communication = Communication{
+        .io = init.io,
+        .stdout = stdout_writer,
+        .stderr = stderr_writer,
+        .allocator = init.arena.allocator(),
+    };
+
     const parsed_command = argument_parser_module.parseArgs(args) catch |err| switch (err) {
         command_envelope_module.CommandEnvelopeError.UnknownCommand => {
-            std.log.info("received unknown command, printing help", .{});
-            return 0;
+            try communication.stderr.print("zgit: '{s}' is not a zgit command\n", .{args[1]});
+            return 1;
         },
     };
 
     switch (parsed_command.command) {
-        command_envelope_module.Command.init => try init_command_module.initialize(init.io, init.arena.allocator(), parsed_command),
-        command_envelope_module.Command.cat_file => return handle_cat_file(init.io, init.arena.allocator(), parsed_command),
-        command_envelope_module.Command.help => std.log.info("This is the help message", .{}),
+        command_envelope_module.Command.init => try init_command_module.initialize(communication, parsed_command),
+        command_envelope_module.Command.cat_file => return handle_cat_file(communication, parsed_command),
+        command_envelope_module.Command.hash_object => return hash_object_module.hash_object(communication, parsed_command),
+        command_envelope_module.Command.help => try communication.stdout.print("This is the help message\n", .{}),
     }
 
     return 0;
 }
 
-fn handle_cat_file(io: std.Io, allocator: std.mem.Allocator, command: command_envelope_module.CommandEnvelope) !u8 {
-    const status = try cat_file_module.cat_file(io, allocator, command);
+fn handle_cat_file(communication: Communication, command: command_envelope_module.CommandEnvelope) !u8 {
+    const status = try cat_file_module.cat_file(communication, command);
     return status;
 }
