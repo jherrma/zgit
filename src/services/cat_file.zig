@@ -2,9 +2,11 @@ const std = @import("std");
 
 const command_envelope_module = @import("../models/command_envelope.zig");
 const discover_repository_module = @import("discover_repository.zig");
+
 const Communication = @import("../models/Communication.zig").Communication;
 const Repository = @import("../models/Repository.zig").Repository;
 const OpenObjectError = @import("../models/errors.zig").OpenObjectError;
+const tree_iterator_module = @import("tree_iterator.zig");
 
 const exists_flag = "-e";
 const print_flag = "-p";
@@ -130,13 +132,25 @@ fn object_type(communication: Communication, decompressor: *std.compress.flate.D
 }
 
 fn print(communication: Communication, decompressor: *std.compress.flate.Decompress) !void {
-    _ = try decompressor.reader.takeDelimiterExclusive(' ');
+    const type_section = try decompressor.reader.takeDelimiterExclusive(' ');
     const size_string = try decompressor.reader.takeDelimiterExclusive(0x00);
 
     // skip the leading ' ' when parsing
     const payload_size = try std.fmt.parseInt(usize, size_string[1..], 10);
     const payload = try communication.allocator.alloc(u8, payload_size);
+    // discard the null byte
+    _ = try decompressor.reader.take(1);
     try decompressor.reader.readSliceAll(payload);
-    // skip the leading delimiter
-    try communication.stdout.print("{s}\n", .{payload[1..]});
+
+    if (!std.mem.eql(u8, type_section, "tree")) {
+        try communication.stdout.print("{s}\n", .{payload});
+    }
+
+    var iterator = tree_iterator_module.new(payload);
+
+    while (try iterator.next()) |entry| {
+        const hash_string: [40]u8 = std.fmt.bytesToHex(entry.oid, .lower);
+        const object_type_name = @tagName(entry.object_type);
+        try communication.stdout.print("{:0>6} {s} {s}\t{s}\n", .{ entry.mode, object_type_name, hash_string, entry.name });
+    }
 }
