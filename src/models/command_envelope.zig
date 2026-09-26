@@ -3,6 +3,7 @@ pub const Command = enum {
     init,
     cat_file,
     hash_object,
+    ls_tree,
 };
 
 pub const CommandEnvelope = struct {
