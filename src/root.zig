@@ -5,7 +5,7 @@ const Io = std.Io;
 const Communication = @import("models/Communication.zig").Communication;
 
 const command_envelope_module = @import("models/command_envelope.zig");
-const argument_parser_module = @import("services/argument_parser.zig");
+const argument_parser_module = @import("utils/argument_parser.zig");
 const init_command_module = @import("services/init_repository.zig");
 const cat_file_module = @import("services//cat_file.zig");
 const hash_object_module = @import("services/hash_object.zig");
@@ -30,7 +30,7 @@ pub fn run(init: std.process.Init, stdout_writer: *std.Io.Writer, stderr_writer:
         command_envelope_module.Command.init => try init_command_module.initialize(communication, parsed_command),
         command_envelope_module.Command.cat_file => return handle_cat_file(communication, parsed_command),
         command_envelope_module.Command.hash_object => return hash_object_module.hash_object(communication, parsed_command),
-        command_envelope_module.Command.ls_tree => return ls_tree_module.ls_tree(),
+        command_envelope_module.Command.ls_tree => return ls_tree_module.ls_tree(communication, parsed_command),
         command_envelope_module.Command.help => try communication.stdout.print("This is the help message\n", .{}),
     }
 
