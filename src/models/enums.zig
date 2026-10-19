@@ -3,4 +3,5 @@ pub const ObjectType = enum {
     tree,
     commit,
     tag,
+    file,
 };
